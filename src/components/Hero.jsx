@@ -33,7 +33,7 @@ export function Hero({ canPlay }) {
     <div className="hero-mask" aria-hidden="true"/>
     <h1 className="hero-title">JUNIPER</h1>
     <div className="hero-copy"><p>Hotel & Retreat</p><p>Comporta · Portugal</p></div>
-    <div className="scroll-cue"><span>Scroll to enter</span><i/></div>
+    <div className="scroll-cue"><span>Deslize para entrar</span><i/></div>
     <div className="clip-count" aria-live="polite">{String(active+1).padStart(2,'0')} / 08</div>
     <div className="hero-location">
       <span>Juniper Hotel & Retreat</span>
