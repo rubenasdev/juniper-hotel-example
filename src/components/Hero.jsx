@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from '/src/vendor/react.bundle.mjs';
 const gsap = window.gsap; const ScrollTrigger = window.ScrollTrigger;
 import { videos } from '../data/media';
 import { useGsapContext } from '../hooks/useGsapContext';
+import { MEDIA } from '../config/responsive';
 gsap.registerPlugin(ScrollTrigger);
 
 export function Hero({ canPlay }) {
@@ -13,19 +14,27 @@ export function Hero({ canPlay }) {
   }, [active, canPlay]);
   useGsapContext(root, () => {
     const mm = gsap.matchMedia();
-    mm.add('(min-width: 769px) and (prefers-reduced-motion: no-preference)', () => {
+    const createTimeline = ({ end, maskSize, animateHeader = true }) => {
       const header = document.querySelector('.header');
-      const timeline = gsap.timeline({scrollTrigger:{trigger:root.current,start:'top top',end:'+=240%',scrub:1,pin:true,onLeave:()=>header?.classList.add('after-hero'),onEnterBack:()=>header?.classList.remove('after-hero')}})
-        .to(header,{autoAlpha:0,y:-12,duration:.18},.05)
+      if (!animateHeader) gsap.set(header, { autoAlpha: 1, y: 0 });
+      const timeline = gsap.timeline({scrollTrigger:{trigger:root.current,start:'top top',end,scrub:1,pin:true,anticipatePin:1,invalidateOnRefresh:true,onLeave:()=>header?.classList.add('after-hero'),onEnterBack:()=>header?.classList.remove('after-hero')}});
+      if (animateHeader) timeline.to(header,{autoAlpha:0,y:-12,duration:.18},.05);
+      timeline
         .to('.hero-copy,.scroll-cue',{opacity:0,y:-24,duration:.25},0)
-        .to('.hero-mask',{webkitMaskSize:'650% 650%',maskSize:'650% 650%',duration:.82,ease:'none'},0)
+        .to('.hero-mask',{webkitMaskSize:maskSize,maskSize,duration:.82,ease:'none'},0)
         .to('.hero-mask',{opacity:0,duration:.18,ease:'none'},.82)
         .to('.clip-count',{opacity:0,duration:.15},.85)
         .fromTo('.hero-location',{autoAlpha:0,y:42},{autoAlpha:1,y:0,duration:.42,ease:'power2.out'},.96)
-        .to('.hero-location',{autoAlpha:0,y:-24,duration:.22,ease:'power2.in'},1.72)
-        .to(header,{autoAlpha:1,y:0,duration:.18,ease:'power2.out'},1.78);
-      return () => { timeline.kill(); header?.classList.remove('after-hero'); };
-    });
+        .to('.hero-location',{autoAlpha:0,y:-24,duration:.22,ease:'power2.in'},1.72);
+      if (animateHeader) timeline.to(header,{autoAlpha:1,y:0,duration:.18,ease:'power2.out'},1.78);
+      return () => {
+        timeline.kill();
+        header?.classList.remove('after-hero');
+        gsap.set(header, { clearProps: 'opacity,visibility,transform' });
+      };
+    };
+    mm.add(MEDIA.heroMobileMotion, () => createTimeline({ end: '+=185%', maskSize: '900% 650%', animateHeader: false }));
+    mm.add(MEDIA.heroDesktopMotion, () => createTimeline({ end: '+=240%', maskSize: '650% 650%' }));
     return () => mm.revert();
   }, []);
   return <section className="hero" id="top" ref={root}>

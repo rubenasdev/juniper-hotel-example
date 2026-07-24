@@ -41,7 +41,8 @@ const ptToEn = {
   'Uma cozinha guiada pelo que cresce perto, pelo que chega do mar e pelo ritmo de cada estação.':'A kitchen guided by what grows nearby, what arrives from the sea and the rhythm of each season.',
   'Conhecer o restaurante':'Discover the restaurant','Jantar · 19:00—23:00':'Dinner · 19:00—23:00',
   'Ir para Alojamentos':'Go to Accommodation','Ir para Spa':'Go to Spa','Ir para Mesa':'Go to Dining',
-  '52 m² · Jardim privado':'52 m² · Private garden','78 m² · Terraço panorâmico':'78 m² · Panoramic terrace','64 m² · Pátio de água':'64 m² · Water courtyard'
+  '52 m² · Jardim privado':'52 m² · Private garden','78 m² · Terraço panorâmico':'78 m² · Panoramic terrace','64 m² · Pátio de água':'64 m² · Water courtyard',
+  'A preparar a sua chegada':'Preparing your arrival'
 };
 
 const enToPt = Object.fromEntries(Object.entries(ptToEn).map(([pt, en]) => [en, pt]));

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from '/src/vendor/react.bundle.mjs';
+import { MEDIA } from '../config/responsive';
 
 const rooms = [
   { name: 'Cabana', meta: '52 m² · Jardim privado', image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=88' },
@@ -19,7 +20,7 @@ export function HomeExtensions({ go }) {
     if (!root || !element || !gsap || !ScrollTrigger) return undefined;
     gsap.registerPlugin(ScrollTrigger);
     const media = gsap.matchMedia();
-    media.add('(min-width: 801px) and (prefers-reduced-motion: no-preference)', () => {
+    media.add(MEDIA.horizontalRooms, () => {
       const distance = () => Math.max(0, element.scrollWidth - window.innerWidth + window.innerWidth * .05);
       const tween = gsap.to(element, {
         x: () => -distance(),
@@ -36,7 +37,7 @@ export function HomeExtensions({ go }) {
       });
       return () => tween.kill();
     });
-    media.add('(max-width: 800px)', () => {
+    media.add(MEDIA.roomsNative, () => {
     const horizontalWheel = event => {
       if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
       event.preventDefault();

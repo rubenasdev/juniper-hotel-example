@@ -9,5 +9,4 @@ start-juniper.cmd
 src/components/Experiences.jsx
 src/components/Intro.jsx
 src/components/Journal.jsx
-src/components/Loader.jsx
 src/components/Rooms.jsx
