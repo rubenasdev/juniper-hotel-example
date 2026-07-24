@@ -1,0 +1,1 @@
+export function Footer({go}){return <footer><small>O tempo abranda aqui</small><a href="/reservations" onClick={e=>{e.preventDefault();go('/reservations')}}>Comece a sua estadia <b>↗</b></a><div><span>Comporta · Portugal</span><span>stay@juniperhotel.com</span><span>© 2026 Juniper</span></div></footer>}
