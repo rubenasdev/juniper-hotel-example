@@ -1,10 +1,10 @@
-import { useLayoutEffect } from 'react';
+import { useEffectEvent, useLayoutEffect } from 'react';
 import { gsap } from '../lib/gsap';
 
-export function useGsapContext(scope, setup, deps = []) {
+export function useGsapContext(scope, setup, dependency) {
+  const runSetup = useEffectEvent(setup);
   useLayoutEffect(() => {
-    const context = gsap.context(setup, scope);
+    const context = gsap.context(() => runSetup(), scope);
     return () => context.revert();
-  // setup is intentionally scoped to the supplied dependency list.
-  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scope, dependency]);
 }

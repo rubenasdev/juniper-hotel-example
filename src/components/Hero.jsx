@@ -35,7 +35,7 @@ export function Hero({ canPlay, headerRef }) {
     mm.add(MEDIA.heroMobileMotion, () => createTimeline({ end: '+=185%', maskSize: '900% 650%', animateHeader: false }));
     mm.add(MEDIA.heroDesktopMotion, () => createTimeline({ end: '+=240%', maskSize: '650% 650%' }));
     return () => mm.revert();
-  }, [headerRef]);
+  }, headerRef);
   return <section className="hero" id="top" ref={root}>
     <div className="hero-media"><MediaVideo key={videos[active]} src={videos[active]} autoPlay={canPlay} preload={active < 2 ? 'auto' : 'metadata'} onEnded={() => setActive(i => (i + 1) % videos.length)}/></div>
     <div className="hero-mask" aria-hidden="true"/>
