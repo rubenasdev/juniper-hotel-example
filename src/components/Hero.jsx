@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-const gsap = window.gsap; const ScrollTrigger = window.ScrollTrigger;
+import { gsap } from '../lib/gsap';
 import { videos } from '../data/media';
 import { useGsapContext } from '../hooks/useGsapContext';
 import { MEDIA } from '../config/responsive';
 import { MediaVideo } from './ui/MediaVideo';
-gsap.registerPlugin(ScrollTrigger);
-
 export function Hero({ canPlay }) {
   const root = useRef(null); const [active, setActive] = useState(0);
   useEffect(() => {

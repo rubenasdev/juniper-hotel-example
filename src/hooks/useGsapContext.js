@@ -1,5 +1,5 @@
 import { useLayoutEffect } from 'react';
-const gsap = window.gsap;
+import { gsap } from '../lib/gsap';
 
 export function useGsapContext(scope, setup, deps = []) {
   useLayoutEffect(() => {

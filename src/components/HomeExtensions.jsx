@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { MEDIA } from '../config/responsive';
 import { Icon } from './ui/Icon';
 import { MediaVideo } from './ui/MediaVideo';
+import { gsap } from '../lib/gsap';
 
 const rooms = [
   { name: 'Cabana', meta: '52 m² · Jardim privado', image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=88' },
@@ -15,10 +16,7 @@ export function HomeExtensions({ go }) {
   useEffect(() => {
     const root = section.current;
     const element = rail.current;
-    const gsap = window.gsap;
-    const ScrollTrigger = window.ScrollTrigger;
-    if (!root || !element || !gsap || !ScrollTrigger) return undefined;
-    gsap.registerPlugin(ScrollTrigger);
+    if (!root || !element) return undefined;
     const media = gsap.matchMedia();
     media.add(MEDIA.horizontalRooms, () => {
       const distance = () => Math.max(0, element.scrollWidth - window.innerWidth + window.innerWidth * .05);
