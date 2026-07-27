@@ -93,7 +93,7 @@ const ptToEn = {
 
 const enToPt = Object.fromEntries(Object.entries(ptToEn).map(([pt, en]) => [en, pt]));
 
-function translateText(text, dictionary, lang) {
+export function translateText(text, dictionary, lang) {
   const clean = text.trim();
   if (!clean) return text;
   let translated = dictionary[clean];
@@ -140,33 +140,18 @@ function translateText(text, dictionary, lang) {
   return translated ? text.replace(clean, translated) : text;
 }
 
-function translateTree(root, lang) {
-  const dictionary = lang === 'en' ? ptToEn : enToPt;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  const nodes = [];
-  while (walker.nextNode()) nodes.push(walker.currentNode);
-  nodes.forEach(node => { node.nodeValue = translateText(node.nodeValue, dictionary, lang); });
-  root.querySelectorAll('[aria-label]').forEach(element => {
-    element.setAttribute('aria-label', translateText(element.getAttribute('aria-label'), dictionary, lang));
-  });
-}
+let currentLanguage = localStorage.getItem('juniper-language') || 'en';
+const listeners = new Set();
+
+export const getLanguage = () => currentLanguage;
+export const subscribeLanguage = listener => { listeners.add(listener); return () => listeners.delete(listener); };
+export const localizeText = text => translateText(text, currentLanguage === 'en' ? ptToEn : enToPt, currentLanguage);
 
 export function applyLanguage(lang) {
-  window.__juniperLanguageObserver?.disconnect();
+  if (lang !== 'en' && lang !== 'pt') return;
+  currentLanguage = lang;
+  localStorage.setItem('juniper-language', lang);
   document.documentElement.lang = lang;
   document.title = lang === 'en' ? 'Juniper — Hotel & Retreat in Comporta' : 'Juniper — Hotel & Retreat na Comporta';
-  translateTree(document.body, lang);
-  const observer = new MutationObserver(records => records.forEach(record => {
-    if (record.type === 'characterData') {
-      const nextValue = translateText(record.target.nodeValue, lang === 'en' ? ptToEn : enToPt, lang);
-      if (nextValue !== record.target.nodeValue) record.target.nodeValue = nextValue;
-      return;
-    }
-    record.addedNodes.forEach(node => {
-      if (node.nodeType === Node.TEXT_NODE) node.nodeValue = translateText(node.nodeValue, lang === 'en' ? ptToEn : enToPt, lang);
-      if (node.nodeType === Node.ELEMENT_NODE) translateTree(node, lang);
-    });
-  }));
-  observer.observe(document.body, { childList: true, characterData: true, subtree: true });
-  window.__juniperLanguageObserver = observer;
+  listeners.forEach(listener => listener());
 }
