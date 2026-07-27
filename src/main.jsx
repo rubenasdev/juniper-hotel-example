@@ -1,5 +1,5 @@
-import { StrictMode } from '/src/vendor/react.bundle.mjs';
-import { createRoot } from '/src/vendor/react-dom-client.bundle.mjs';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './styles/global.css';
 import './styles/home-responsive.css';
