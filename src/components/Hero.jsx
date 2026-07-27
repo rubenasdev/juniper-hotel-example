@@ -4,7 +4,7 @@ import { videos } from '../data/media';
 import { useGsapContext } from '../hooks/useGsapContext';
 import { MEDIA } from '../config/responsive';
 import { MediaVideo } from './ui/MediaVideo';
-export function Hero({ canPlay }) {
+export function Hero({ canPlay, headerRef }) {
   const root = useRef(null); const [active, setActive] = useState(0);
   useEffect(() => {
     if (!canPlay) return;
@@ -14,7 +14,7 @@ export function Hero({ canPlay }) {
   useGsapContext(root, () => {
     const mm = gsap.matchMedia();
     const createTimeline = ({ end, maskSize, animateHeader = true }) => {
-      const header = document.querySelector('.header');
+      const header = headerRef.current;
       if (!animateHeader) gsap.set(header, { autoAlpha: 1, y: 0 });
       const timeline = gsap.timeline({scrollTrigger:{trigger:root.current,start:'top top',end,scrub:1,pin:true,anticipatePin:1,invalidateOnRefresh:true,onLeave:()=>header?.classList.add('after-hero'),onEnterBack:()=>header?.classList.remove('after-hero')}});
       if (animateHeader) timeline.to(header,{autoAlpha:0,y:-12,duration:.18},.05);
@@ -35,7 +35,7 @@ export function Hero({ canPlay }) {
     mm.add(MEDIA.heroMobileMotion, () => createTimeline({ end: '+=185%', maskSize: '900% 650%', animateHeader: false }));
     mm.add(MEDIA.heroDesktopMotion, () => createTimeline({ end: '+=240%', maskSize: '650% 650%' }));
     return () => mm.revert();
-  }, []);
+  }, [headerRef]);
   return <section className="hero" id="top" ref={root}>
     <div className="hero-media"><MediaVideo key={videos[active]} src={videos[active]} autoPlay={canPlay} preload={active < 2 ? 'auto' : 'metadata'} onEnded={() => setActive(i => (i + 1) % videos.length)}/></div>
     <div className="hero-mask" aria-hidden="true"/>

@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { HomeExtensions } from './components/HomeExtensions';
@@ -12,8 +12,8 @@ import { useLanguage } from './hooks/useLanguage';
 const experienceSlugs = new Set(['praia-oceano', 'cavalo-pinhal', 'arrozais-aldeias', 'wellness-rituais']);
 const routes = { '/suites': Suites, '/dining': Dining, '/experiences': Experiences, '/journal': Journal, '/reservations': Booking };
 
-function HomeComplete({ go, canPlay }) {
-  return <><Home go={go} canPlay={canPlay}/><HomeExtensions go={go}/></>;
+function HomeComplete({ go, canPlay, headerRef }) {
+  return <><Home go={go} canPlay={canPlay} headerRef={headerRef}/><HomeExtensions go={go}/></>;
 }
 
 function resolveRoute(path) {
@@ -25,6 +25,8 @@ function resolveRoute(path) {
 }
 
 export function App() {
+  const headerRef = useRef(null);
+  const contentRef = useRef(null);
   const language = useLanguage();
   const [path, setPath] = useState(() => location.pathname.replace(/\/$/, '') || '/');
   const [entered, setEntered] = useState(() => location.pathname !== '/');
@@ -40,14 +42,15 @@ export function App() {
     setPath(next.pathname.replace(/\/$/, '') || '/');
     scrollTo({ top: 0, behavior: 'instant' });
   }, []);
+  const completeEntrance = useCallback(() => setEntered(true), []);
   const route = resolveRoute(path);
   const darkHead = ['/', '/dining', '/reservations'].includes(path) || route.name === 'experience-detail';
   return <div key={language} className={`site route-${route.name} ${darkHead ? 'dark-head' : ''} ${path === '/' ? 'home-route' : ''}`}>
-    {path === '/' && !entered ? <Loader progress={progress} ready={ready} onComplete={() => setEntered(true)}/> : null}
-    <Header path={path} go={go}/>
-    <main id="main-content" key={path} tabIndex="-1">
-      <Suspense fallback={<RouteLoader/>}><route.Page go={go} slug={route.slug} canPlay={entered || path !== '/'}/></Suspense>
+    {path === '/' && !entered ? <Loader progress={progress} ready={ready} onComplete={completeEntrance}/> : null}
+    <Header ref={headerRef} contentRef={contentRef} path={path} go={go}/>
+    <main ref={contentRef} id="main-content" key={path} tabIndex="-1">
+      <Suspense fallback={<RouteLoader/>}><route.Page go={go} slug={route.slug} canPlay={entered || path !== '/'} headerRef={headerRef}/></Suspense>
     </main>
-    {path !== '/reservations' ? <Footer go={go}/> : null}
+    {path !== '/reservations' ? <Footer id={path==='/'?'home-reserve':undefined} go={go}/> : null}
   </div>;
 }
