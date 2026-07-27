@@ -3,6 +3,7 @@ const gsap = window.gsap; const ScrollTrigger = window.ScrollTrigger;
 import { videos } from '../data/media';
 import { useGsapContext } from '../hooks/useGsapContext';
 import { MEDIA } from '../config/responsive';
+import { MediaVideo } from './ui/MediaVideo';
 gsap.registerPlugin(ScrollTrigger);
 
 export function Hero({ canPlay }) {
@@ -38,7 +39,7 @@ export function Hero({ canPlay }) {
     return () => mm.revert();
   }, []);
   return <section className="hero" id="top" ref={root}>
-    <div className="hero-media"><video key={videos[active]} autoPlay={canPlay} muted playsInline preload={active < 2 ? 'auto' : 'metadata'} onEnded={() => setActive(i => (i + 1) % videos.length)}><source src={videos[active]} type="video/mp4"/></video></div>
+    <div className="hero-media"><MediaVideo key={videos[active]} src={videos[active]} autoPlay={canPlay} preload={active < 2 ? 'auto' : 'metadata'} onEnded={() => setActive(i => (i + 1) % videos.length)}/></div>
     <div className="hero-mask" aria-hidden="true"/>
     <h1 className="hero-title">JUNIPER</h1>
     <div className="hero-copy"><p>Hotel & Retreat</p><p>Comporta · Portugal</p></div>
