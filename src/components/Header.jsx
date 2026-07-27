@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { applyLanguage } from '../i18n';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { useLanguage } from '../hooks/useLanguage';
 
 const links = [['/suites','Suites'],['/dining','Mesa'],['/experiences','Experiências'],['/journal','Journal']];
 const A=({to,go,children,className='',onNavigate})=><a className={className} href={to} onClick={e=>{e.preventDefault();onNavigate?.();go(to)}}>{children}</a>;
@@ -8,12 +10,13 @@ function useExperienceRail(path){useEffect(()=>{if(path!=='/experiences')return;
 
 export function Header({path,go}){
   const[open,setOpen]=useState(false);
-  const[language,setLanguage]=useState(()=>localStorage.getItem('juniper-language')||'en');
+  const language=useLanguage();
   const[pastHero,setPastHero]=useState(false);
-  useExperienceRail(path);
-  useEffect(()=>{if(!open)return undefined;const previous=document.body.style.overflow;document.body.style.overflow='hidden';document.body.classList.add('menu-open');return()=>{document.body.style.overflow=previous;document.body.classList.remove('menu-open')}},[open]);
+  // Keep the experience rail under explicit user control; avoids unsolicited motion.
+  useExperienceRail('');
+  useBodyScrollLock(open);
+  useEffect(()=>{if(!open)return undefined;document.body.classList.add('menu-open');const first=document.querySelector('#primary-navigation a');first?.focus();const close=event=>{if(event.key==='Escape')setOpen(false)};window.addEventListener('keydown',close);return()=>{document.body.classList.remove('menu-open');window.removeEventListener('keydown',close)}},[open]);
   useEffect(()=>{if(path!=='/suites')return;const room=Number(new URLSearchParams(location.search).get('room'));if(Number.isInteger(room)&&room>=0&&room<3){const id=requestAnimationFrame(()=>document.querySelectorAll('.suites>aside button')[room]?.click());return()=>cancelAnimationFrame(id)}},[path]);
-  useEffect(()=>{const id=setTimeout(()=>applyLanguage(language),0);localStorage.setItem('juniper-language',language);return()=>clearTimeout(id)},[language,path]);
   useEffect(()=>{
     if(!path.startsWith('/experiences/')) return undefined;
     const update=()=>{const hero=document.querySelector('.experience-detail-hero');setPastHero(window.scrollY>Math.max(80,(hero?.offsetHeight||window.innerHeight)-76))};
@@ -24,7 +27,7 @@ export function Header({path,go}){
     <A to="/" go={go} className="brand" onNavigate={()=>setOpen(false)}>JUNIPER</A>
     <nav id="primary-navigation">{links.map(([to,label])=><A key={to} to={to} go={go} onNavigate={()=>setOpen(false)} className={path===to||(to==='/experiences'&&path.startsWith('/experiences/'))?'active':''}>{label}</A>)}</nav>
     <div className="header-actions">
-      <div className="language-switch" role="group" aria-label="Language"><button className={language==='en'?'active':''} onClick={()=>setLanguage('en')} aria-label="English">EN</button><i/><button className={language==='pt'?'active':''} onClick={()=>setLanguage('pt')} aria-label="Português">PT</button></div>
+      <div className="language-switch" role="group" aria-label="Language"><button className={language==='en'?'active':''} onClick={()=>applyLanguage('en')} aria-pressed={language==='en'} aria-label="English">EN</button><i/><button className={language==='pt'?'active':''} onClick={()=>applyLanguage('pt')} aria-pressed={language==='pt'} aria-label="Português">PT</button></div>
       <A to="/reservations" go={go} className="book">Reservar ↗</A>
     </div>
     <button className="hamb" onClick={()=>setOpen(value=>!value)} aria-label={open?'Close menu':'Menu'} aria-expanded={open} aria-controls="primary-navigation"><i/><i/></button>

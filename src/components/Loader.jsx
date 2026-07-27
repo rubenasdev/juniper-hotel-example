@@ -1,15 +1,11 @@
 import { useEffect, useRef } from 'react';
-
-const gsap = window.gsap;
+import { gsap } from '../lib/gsap';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export function Loader({ progress, ready, onComplete }) {
   const root = useRef(null);
 
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previousOverflow; };
-  }, []);
+  useBodyScrollLock(true);
 
   useEffect(() => {
     if (!ready || !root.current) return undefined;

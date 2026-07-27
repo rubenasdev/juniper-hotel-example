@@ -1,10 +1,11 @@
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import {Hero} from '../components/Hero';
 import {useGsapContext} from '../hooks/useGsapContext';
 import {BookingOptionCard} from '../components/booking/BookingOptionCard';
 import {GalleryDialog} from '../components/gallery/GalleryDialog';
 import {Icon} from '../components/ui/Icon';
 import {MediaVideo} from '../components/ui/MediaVideo';
+import {useBodyScrollLock} from '../hooks/useBodyScrollLock';
 const ArrowRight=p=><Icon name="right" {...p}/>,ArrowLeft=p=><Icon name="left" {...p}/>,CalendarDays=p=><Icon name="calendar" {...p}/>,Minus=p=><Icon name="minus" {...p}/>,Plus=p=><Icon name="plus" {...p}/>;
 const img={suite:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2000&q=88',garden:'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=2000&q=88',atelier:'https://images.unsplash.com/photo-1615874959474-d609969a20ed?auto=format&fit=crop&w=2000&q=88',dining:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2000&q=88',spa:'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1800&q=88',coast:'https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=2000&q=88',horse:'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?auto=format&fit=crop&w=1600&q=88',field:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=88'};
 const Link=({to,go,children,light=false})=><a className={`link ${light?'light':''}`} href={to} onClick={e=>{e.preventDefault();go(to)}}>{children}<ArrowRight size={14}/></a>;
@@ -51,7 +52,10 @@ export function Suites({go}){
   // The timer intentionally restarts when the active suite or photo changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(()=>{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;const timer=setTimeout(()=>move(1),5200);return()=>clearTimeout(timer)},[a,photo,s.photos.length]);
-  useEffect(()=>{if(!imageOpen)return;const previous=document.body.style.overflow;const close=event=>{if(event.key==='Escape')setImageOpen(false)};document.body.style.overflow='hidden';window.addEventListener('keydown',close);return()=>{document.body.style.overflow=previous;window.removeEventListener('keydown',close)}},[imageOpen]);
+  useBodyScrollLock(imageOpen);
+  useEffect(()=>{if(!imageOpen)return;const close=event=>{if(event.key==='Escape')setImageOpen(false)};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close)},[imageOpen]);
+  useEffect(()=>{const tablist=document.querySelector('.detail-tabs');if(!tablist)return undefined;const tabs=[...tablist.querySelectorAll('[role="tab"]')];tabs.forEach((tab,index)=>{tab.id=`suite-tab-${index}`;tab.setAttribute('aria-controls','suite-detail-panel')});const keyboard=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const current=tabs.indexOf(document.activeElement),next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(current+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;tabs[next]?.focus();tabs[next]?.click()};tablist.addEventListener('keydown',keyboard);return()=>tablist.removeEventListener('keydown',keyboard)},[]);
+  useEffect(()=>{const tabs=[...document.querySelectorAll('.detail-tabs [role="tab"]')];tabs.forEach(tab=>{tab.tabIndex=tab.getAttribute('aria-selected')==='true'?0:-1});const panel=document.querySelector('.suite-details [role="tabpanel"]');if(panel){panel.id='suite-detail-panel';panel.setAttribute('aria-labelledby',detailTab==='features'?'suite-tab-0':'suite-tab-1')}},[detailTab]);
   return <section className="suites">
     <header><h1>Espaços<br/>de calma.</h1><p>Cada quarto é uma paisagem privada, desenhada para devolver espaço ao tempo.</p></header>
     <aside>{suites.map((x,i)=><button key={x.name} className={a===i?'active':''} onClick={()=>selectSuite(i)}><small>0{i+1}</small>{x.name}</button>)}</aside>
@@ -174,7 +178,8 @@ export function ExperienceDetail({go,slug}){
   const root=useRef(null),[chapter,setChapter]=useState(0),[lightbox,setLightbox]=useState(null);
   const experience=experienceCatalog.find(item=>item.slug===slug)||experienceCatalog[0];
   const media=experienceMedia[experience.slug],related=experienceCatalog.filter(item=>item.slug!==experience.slug).slice(0,2);
-  useEffect(()=>{document.body.style.overflow=lightbox!==null?'hidden':'';const close=e=>e.key==='Escape'&&setLightbox(null);window.addEventListener('keydown',close);return()=>{document.body.style.overflow='';window.removeEventListener('keydown',close)}},[lightbox]);
+  useBodyScrollLock(lightbox!==null);
+  useEffect(()=>{const close=e=>e.key==='Escape'&&setLightbox(null);window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close)},[]);
   useGsapContext(root,()=>{
     const gsap=window.gsap,ScrollTrigger=window.ScrollTrigger;if(!gsap||!ScrollTrigger)return;
     gsap.registerPlugin(ScrollTrigger);const mm=gsap.matchMedia();
@@ -213,10 +218,15 @@ const bookingExperiences=[
 const dateKey=date=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
 const sameDay=(a,b)=>a&&b&&dateKey(a)===dateKey(b);
 const formatBookingDate=date=>date?.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'})||'';
+const today=()=>{const value=new Date();return new Date(value.getFullYear(),value.getMonth(),value.getDate())};
+const addDays=(date,days)=>new Date(date.getFullYear(),date.getMonth(),date.getDate()+days);
 function BookingCalendar({start,end,onChange,onClose}){
+  const dialogRef=useRef(null);
   const initial=new Date(start.getFullYear(),start.getMonth(),1);
   const[month,setMonth]=useState(initial);
+  const minimum=today();
   const selectDate=date=>{
+    if(date<minimum)return;
     if(!start||end||date<start)onChange(date,null);
     else onChange(start,date);
   };
@@ -225,13 +235,17 @@ function BookingCalendar({start,end,onChange,onClose}){
     const days=new Date(first.getFullYear(),first.getMonth()+1,0).getDate();
     const leading=(first.getDay()+6)%7;
     const cells=[...Array(leading).fill(null),...Array.from({length:days},(_,i)=>new Date(first.getFullYear(),first.getMonth(),i+1))];
-    return <div className="calendar-month"><h3>{first.toLocaleDateString('pt-PT',{month:'long',year:'numeric'})}</h3><div className="calendar-weekdays">{['S','T','Q','Q','S','S','D'].map((day,i)=><span key={`${day}${i}`}>{day}</span>)}</div><div className="calendar-days">{cells.map((date,i)=>date?<button type="button" key={dateKey(date)} onClick={()=>selectDate(date)} className={`${sameDay(date,start)?'range-start ':''}${sameDay(date,end)?'range-end ':''}${start&&end&&date>start&&date<end?'in-range':''}`} aria-label={date.toLocaleDateString('pt-PT')}>{date.getDate()}</button>:<i key={`empty-${i}`}/>)}</div></div>;
+    return <div className="calendar-month"><h3>{first.toLocaleDateString('pt-PT',{month:'long',year:'numeric'})}</h3><div className="calendar-weekdays" aria-hidden="true">{['S','T','Q','Q','S','S','D'].map((day,i)=><span key={`${day}${i}`}>{day}</span>)}</div><div className="calendar-days">{cells.map((date,i)=>date?<button type="button" key={dateKey(date)} disabled={date<minimum} onClick={()=>selectDate(date)} className={`${sameDay(date,start)?'range-start ':''}${sameDay(date,end)?'range-end ':''}${start&&end&&date>start&&date<end?'in-range':''}`} aria-pressed={sameDay(date,start)||sameDay(date,end)} aria-label={date.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}>{date.getDate()}</button>:<i key={`empty-${i}`} aria-hidden="true"/>)}</div></div>;
   };
-  return <div className="booking-calendar" role="dialog" aria-label="Escolher datas"><div className="calendar-nav"><button type="button" onClick={()=>setMonth(new Date(month.getFullYear(),month.getMonth()-1,1))} aria-label="Mês anterior"><ArrowLeft/></button><button type="button" onClick={()=>setMonth(new Date(month.getFullYear(),month.getMonth()+1,1))} aria-label="Mês seguinte"><ArrowRight/></button></div><div className="calendar-grid">{renderMonth(0)}{renderMonth(1)}</div><footer><span><b>{formatBookingDate(start)}</b>{end?` — ${formatBookingDate(end)}`:' — escolha a saída'}</span><button type="button" disabled={!end} onClick={onClose}>Aplicar</button></footer></div>;
+  const previousDisabled=new Date(month.getFullYear(),month.getMonth()+1,0)<minimum;
+  useEffect(()=>{const previousFocus=document.activeElement,dialog=dialogRef.current;dialog?.querySelector('button:not(:disabled)')?.focus();const keyboard=event=>{if(event.key==='Escape'){onClose();return}if(event.key!=='Tab'||!dialog)return;const controls=[...dialog.querySelectorAll('button:not(:disabled)')],first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}};window.addEventListener('keydown',keyboard);return()=>{window.removeEventListener('keydown',keyboard);previousFocus?.focus?.()}},[onClose]);
+  return <div ref={dialogRef} id="booking-calendar" className="booking-calendar" role="dialog" aria-modal="true" aria-label="Escolher datas"><div className="calendar-nav"><button type="button" disabled={previousDisabled} onClick={()=>setMonth(new Date(month.getFullYear(),month.getMonth()-1,1))} aria-label="Mês anterior"><ArrowLeft/></button><button type="button" onClick={()=>setMonth(new Date(month.getFullYear(),month.getMonth()+1,1))} aria-label="Mês seguinte"><ArrowRight/></button></div><div className="calendar-grid">{renderMonth(0)}{renderMonth(1)}</div><footer><span><b>{formatBookingDate(start)}</b>{end?` — ${formatBookingDate(end)}`:' — escolha a saída'}</span><button type="button" disabled={!end} onClick={onClose}>Aplicar</button></footer></div>;
 }
 export function Booking(){
-  const defaultStart=new Date(2026,6,29),defaultEnd=new Date(2026,6,31);
+  const defaultStart=addDays(today(),2),defaultEnd=addDays(today(),4);
   const[g,setG]=useState(2),[done,setDone]=useState(false),[calendarOpen,setCalendarOpen]=useState(false),[start,setStart]=useState(defaultStart),[end,setEnd]=useState(defaultEnd),[selectedRoom,setSelectedRoom]=useState(bookingRooms[0].name),[selectedExperiences,setSelectedExperiences]=useState([]),[hoveredVisual,setHoveredVisual]=useState(null),[visualVersion,setVisualVersion]=useState(0);
+  useBodyScrollLock(calendarOpen);
+  const closeCalendar=useCallback(()=>setCalendarOpen(false),[]);
   const activeVisual=hoveredVisual||{name:'',price:'',image:'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=',video:null};
   const selectedExperienceData=null;
   const showVisual=item=>{setHoveredVisual(item);setVisualVersion(version=>version+1)};
@@ -244,8 +258,8 @@ export function Booking(){
         <h1>Reservas</h1>
         <p>Comece a desenhar a sua estadia e acrescente os momentos que quer viver.</p>
         <form onSubmit={e=>{e.preventDefault();setDone(true)}}>
-          <label className="date-field">Check-in — Check-out<button type="button" className="date-trigger" onClick={()=>setCalendarOpen(open=>!open)} aria-expanded={calendarOpen}><span>{formatBookingDate(start)} — {formatBookingDate(end)}</span><CalendarDays size={17}/></button>{calendarOpen?<BookingCalendar start={start} end={end} onChange={(nextStart,nextEnd)=>{setStart(nextStart);setEnd(nextEnd)}} onClose={()=>setCalendarOpen(false)}/>:null}</label>
-          <label>Hóspedes<span className="step"><button type="button" onClick={()=>setG(Math.max(1,g-1))}><Minus/></button><b>{g} Adultos</b><button type="button" onClick={()=>setG(g+1)}><Plus/></button></span></label>
+          <div className="date-field"><span>Check-in — Check-out</span><button type="button" className="date-trigger" onClick={()=>setCalendarOpen(open=>!open)} aria-expanded={calendarOpen} aria-controls="booking-calendar"><span>{formatBookingDate(start)} — {formatBookingDate(end)}</span><CalendarDays size={17}/></button>{calendarOpen?<BookingCalendar start={start} end={end} onChange={(nextStart,nextEnd)=>{setStart(nextStart);setEnd(nextEnd)}} onClose={closeCalendar}/>:null}</div>
+          <div className="guest-field"><span>Hóspedes</span><span className="step"><button type="button" aria-label="Remover hóspede" onClick={()=>setG(Math.max(1,g-1))}><Minus/></button><b aria-live="polite">{g} Adultos</b><button type="button" aria-label="Adicionar hóspede" onClick={()=>setG(g+1)}><Plus/></button></span></div>
           <fieldset className="booking-rooms"><legend>Alojamento <small>Selecione um</small></legend><div>{bookingRooms.map(room=><BookingOptionCard key={room.name} item={room} selected={selectedRoom===room.name} priceLabel="Desde" suffix="/ noite" onPreview={showVisual} onPreviewEnd={clearVisual} onSelect={selectRoom}/>)}</div></fieldset>
           <fieldset className="booking-experiences"><legend>Experiências <small>Selecione todas as que desejar</small></legend><div>{bookingExperiences.map(experience=><BookingOptionCard key={experience.name} item={experience} selected={selectedExperiences.includes(experience.name)} priceLabel="Por pessoa" showStatus onPreview={showVisual} onPreviewEnd={clearVisual} onSelect={toggleExperience}/>)}</div></fieldset>
           <button className="submit" disabled={!start||!end}>Verificar disponibilidade</button>
