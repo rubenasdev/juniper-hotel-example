@@ -1,11 +1,9 @@
-import { useEffect, useRef } from '/src/vendor/react.bundle.mjs';
+import { useEffect, useRef } from 'react';
 
 const gsap = window.gsap;
 
 export function Loader({ progress, ready, onComplete }) {
   const root = useRef(null);
-  const complete = useRef(onComplete);
-  complete.current = onComplete;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -15,13 +13,13 @@ export function Loader({ progress, ready, onComplete }) {
 
   useEffect(() => {
     if (!ready || !root.current) return undefined;
-    const timeline = gsap.timeline({ delay: .28, onComplete: () => complete.current() });
+    const timeline = gsap.timeline({ delay: .28, onComplete });
     timeline
       .to(root.current.querySelector('.loader-minimal'), { opacity: 0, y: -8, duration: .3, ease: 'power2.in' })
       .to(root.current.querySelector('.loader-curtain--left'), { xPercent: -101, duration: 1, ease: 'power4.inOut' }, .15)
       .to(root.current.querySelector('.loader-curtain--right'), { xPercent: 101, duration: 1, ease: 'power4.inOut' }, .15);
     return () => timeline.kill();
-  }, [ready]);
+  }, [ready, onComplete]);
 
   return <div className="loader" ref={root} aria-label="Loading Juniper" aria-live="polite">
     <div className="loader-curtain loader-curtain--left"/><div className="loader-curtain loader-curtain--right"/>

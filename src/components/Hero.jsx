@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from '/src/vendor/react.bundle.mjs';
+import { useEffect, useRef, useState } from 'react';
 const gsap = window.gsap; const ScrollTrigger = window.ScrollTrigger;
 import { videos } from '../data/media';
 import { useGsapContext } from '../hooks/useGsapContext';

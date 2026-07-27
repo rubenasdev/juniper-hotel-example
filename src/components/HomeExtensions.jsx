@@ -1,9 +1,9 @@
-import { useEffect, useRef } from '/src/vendor/react.bundle.mjs';
+import { useEffect, useRef } from 'react';
 import { MEDIA } from '../config/responsive';
 
 const rooms = [
   { name: 'Cabana', meta: '52 m² · Jardim privado', image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=88' },
-  { name: 'Juniper Suite', meta: '78 m² · Terraço panorâmico', image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1800&q=88' },
+  { name: 'Juniper Villa', meta: '78 m² · Terraço panorâmico', image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1800&q=88' },
   { name: 'Atelier', meta: '64 m² · Pátio de água', image: 'https://images.unsplash.com/photo-1615874959474-d609969a20ed?auto=format&fit=crop&w=1800&q=88' },
 ];
 
